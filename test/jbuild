@@ -1,5 +1,5 @@
 (jbuild_version 1)
 
 (executables
- ((libraries (core cohttp.lwt alcotest))
+ ((libraries (core cohttp.lwt alcotest ezjsonm))
    (names (run))))

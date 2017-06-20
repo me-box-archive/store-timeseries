@@ -15,12 +15,16 @@ PKG conduit.lwt
 PKG conduit.lwt-unix
 PKG core
 PKG core_kernel
+PKG cstruct
+PKG ezjsonm
 PKG fieldslib
 PKG fmt
 PKG fmt.cli
 PKG fmt.tty
+PKG hex
 PKG ipaddr
 PKG ipaddr.unix
+PKG jsonm
 PKG logs
 PKG logs.fmt
 PKG logs.lwt
@@ -30,6 +34,8 @@ PKG lwt.unix
 PKG magic-mime
 PKG num
 PKG num.core
+PKG ocplib-endian
+PKG ocplib-endian.bigstring
 PKG ppx_assert.runtime-lib
 PKG ppx_bench.runtime-lib
 PKG ppx_expect.collector
@@ -51,5 +57,6 @@ PKG uchar
 PKG unix
 PKG uri
 PKG uri.services
+PKG uutf
 PKG variantslib
 S .

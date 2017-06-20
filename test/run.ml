@@ -2,6 +2,7 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 open Alcotest
+open Core.Std
 
 let url = "http://127.0.0.1:3000"
 
@@ -121,8 +122,41 @@ let test_ts = [
   "remove ts latest" , `Quick, remove_ts_latest;
 ]
 
+
+(* hypercat *)
+
+module Test_hypercat = struct
+  let add_item1 path item = Lwt_main.run (post path item)
+  let add_item2 = add_item1
+  let get_cat path = Lwt_main.run (get path)
+  let item1 = Ezjsonm.to_string (Ezjsonm.from_channel (open_in "item1.json"))
+  let item2 = Ezjsonm.to_string (Ezjsonm.from_channel (open_in "item2.json"))
+  let status_true = "{\"status\":true}"
+  let item_count cat =
+    let items = Ezjsonm.find cat ["items"] in
+    let alist = Ezjsonm.get_list ident items in
+    List.length alist
+  let two_items = 2
+end
+
+let add_item1 () =
+  Alcotest.(check string) "status true" Test_hypercat.status_true (Test_hypercat.add_item1 "/cat" Test_hypercat.item1)
+let add_item2 () =
+  Alcotest.(check string) "status true" Test_hypercat.status_true (Test_hypercat.add_item2 "/cat" Test_hypercat.item2)    
+let item_count () =
+  Alcotest.(check int) "match count" Test_hypercat.two_items (Test_hypercat.item_count
+                                                                (Ezjsonm.from_string (Test_hypercat.get_cat "/cat")))
+
+(* will pass test on new cat *)
+let test_hypercat = [
+  "add item1" , `Quick, add_item1;
+  "add item2" , `Quick, add_item2;
+  "item count", `Quick, item_count;
+]
+
 let () =
   Alcotest.run "Data store" [
     "test_kv", test_kv;
     "test_ts", test_ts;
+    "test_hypercat", test_hypercat;
   ]
