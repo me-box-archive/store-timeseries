@@ -74,6 +74,18 @@ let update_hypercat = post "/cat"
       respond' (`Json resp)
     end
 
+
+let macaroon_secret = "key" (* we need to get this from arbiter instead *)
+
+let validate_token ~f =
+  let filter handler req =
+    (* note we need to refuse when no X-Api-Key still *)
+    match Cohttp.Header.get (Request.headers req) "X-Api-Key" with
+    | Some token when not (f token macaroon_secret) ->
+      `String ("Invalid token") |> respond'
+    | _ -> handler req in
+  Rock.Middleware.create ~filter ~name:"validate_token"
+
 let _ =
   App.empty
   |> post_kv
@@ -85,4 +97,5 @@ let _ =
   |> get_ts_range
   |> get_hypercat
   |> update_hypercat
+  |> middleware (validate_token ~f:Auth_token.is_valid_token)
   |> App.run_command

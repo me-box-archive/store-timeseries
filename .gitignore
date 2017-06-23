@@ -4,3 +4,4 @@
 
 src/_build/
 test/_build/
+.DS_Store

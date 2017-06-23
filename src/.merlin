@@ -17,6 +17,8 @@ PKG conduit.lwt-unix
 PKG core
 PKG core_kernel
 PKG cstruct
+PKG ctypes
+PKG ctypes.stubs
 PKG ezirmin
 PKG ezjsonm
 PKG ezjsonm.lwt
@@ -45,6 +47,8 @@ PKG logs.lwt
 PKG lwt
 PKG lwt.log
 PKG lwt.unix
+PKG macaroons
+PKG macaroons.sodium
 PKG magic-mime
 PKG mstruct
 PKG nocrypto
@@ -81,6 +85,8 @@ PKG re.posix
 PKG result
 PKG sexplib
 PKG sexplib.unix
+PKG sodium
+PKG str
 PKG stringext
 PKG tc
 PKG threads
