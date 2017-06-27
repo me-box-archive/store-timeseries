@@ -28,3 +28,6 @@ _build/
 setup.data
 setup.log
 
+# docker files
+Dockerfile
+.dockerignore
