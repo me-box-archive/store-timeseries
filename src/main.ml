@@ -107,6 +107,6 @@ let run () =
 
 
 let _ =
-  Bootstrap.init ();
+  Bootstrap.init (); (* disable this to test locally *)
   run ()
 
