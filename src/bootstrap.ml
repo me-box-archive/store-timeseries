@@ -17,8 +17,8 @@ let env = {
   http_key = "";
   http_cert = "";
   arbiter_endpoint = "http://127.0.0.1:8888/store/secret";
-  arbiter_token_file = "/tmp/run/secrets/ARBITER_TOKEN";
-  http_certs_file = "/tmp/run/secrets/DATABOX_PEM";
+  arbiter_token_file = "/run/secrets/ARBITER_TOKEN";
+  http_certs_file = "/run/secrets/DATABOX_PEM";
 }
 
 let init_http_cert () =

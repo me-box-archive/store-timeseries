@@ -75,19 +75,24 @@ let update_hypercat = post "/cat"
     end
 
 
-let macaroon_secret = "key" (* we need to get this from arbiter instead *)
-
 let validate_token ~f =
   let filter handler req =
     (* note we need to refuse when no X-Api-Key still *)
     match Cohttp.Header.get (Request.headers req) "X-Api-Key" with
-    | Some token when not (f token macaroon_secret) ->
+    | Some token when not (f token (Bootstrap.get_macaroon_secret ())) ->
       `String ("Invalid token") |> respond'
     | _ -> handler req in
   Rock.Middleware.create ~filter ~name:"validate_token"
 
-let _ =
+let with_ssl () =
+  App.ssl ~cert:(Bootstrap.get_http_cert ()) ~key:(Bootstrap.get_http_key ())
+         
+let with_macaroon () =
+  middleware (validate_token ~f:Auth_token.is_valid_token)
+  
+let run () =
   App.empty
+  |> with_ssl ()
   |> post_kv
   |> get_kv
   |> post_ts
@@ -97,5 +102,11 @@ let _ =
   |> get_ts_range
   |> get_hypercat
   |> update_hypercat
-  |> middleware (validate_token ~f:Auth_token.is_valid_token)
+  |> with_macaroon ()
   |> App.run_command
+
+
+let _ =
+  Bootstrap.init ();
+  run ()
+
