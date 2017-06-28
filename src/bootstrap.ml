@@ -16,7 +16,7 @@ let env = {
   macaroon_secret = "";
   http_key = "";
   http_cert = "";
-  arbiter_endpoint = "http://127.0.0.1:8888/store/secret";
+  arbiter_endpoint = "https://127.0.0.1:8888/store/secret";
   arbiter_token_file = "/run/secrets/ARBITER_TOKEN";
   http_certs_file = "/run/secrets/DATABOX_PEM";
 }
