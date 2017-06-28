@@ -1,5 +1,5 @@
 (jbuild_version 1)
 
 (executables
- ((libraries (core ezirmin opium.unix macaroons.sodium))
+ ((libraries (core ezirmin opium.unix macaroons.sodium bos))
    (names (main))))

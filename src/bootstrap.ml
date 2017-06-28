@@ -5,15 +5,39 @@ open Cohttp_lwt_unix
 
 type t = {
   mutable macaroon_secret: string;
+  mutable http_key: string;
+  mutable http_cert: string;
   arbiter_endpoint: string;
   arbiter_token_file: string;
+  http_certs_file: string;
 }
 
 let env = {
-  macaroon_secret = "not set yet";
+  macaroon_secret = "";
+  http_key = "";
+  http_cert = "";
   arbiter_endpoint = "http://127.0.0.1:8888/store/secret";
-  arbiter_token_file = "/tmp/run/secrets/ARBITER_TOKEN"
+  arbiter_token_file = "/tmp/run/secrets/ARBITER_TOKEN";
+  http_certs_file = "/tmp/run/secrets/DATABOX_PEM";
 }
+
+let init_http_cert () =
+  Fpath.v env.http_certs_file |>
+  Bos.OS.File.read |>
+  Rresult.R.get_ok |>
+  Ezjsonm.from_string |>
+  Ezjsonm.get_dict |>
+  fun dict ->
+  let key = List.Assoc.find_exn dict "clientprivate" ~equal:(=) in
+  let cert = List.Assoc.find_exn dict "clientcert" ~equal:(=) in
+  env.http_key <- Ezjsonm.get_string key;
+  env.http_cert <- Ezjsonm.get_string cert
+
+let get_http_key () =
+  env.http_key
+
+let get_http_cert () =
+  env.http_cert
 
 let arbiter_token () =
   Fpath.v env.arbiter_token_file |>
@@ -39,4 +63,5 @@ let init_macaroon_secret token =
   set_macaroon_secret
 
 let init () =
+  init_http_cert ();
   init_macaroon_secret (arbiter_token ())
