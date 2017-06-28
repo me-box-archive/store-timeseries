@@ -2,13 +2,23 @@ FROM ocaml/opam:alpine
 
 MAINTAINER jmoore@zedstar.org
 
-RUN opam depext -i core
-RUN opam depext -y conf-gmp.1
-RUN opam depext -y conf-libsodium
-RUN opam depext -y camlzip
-RUN opam depext -y conf-perl
+RUN sudo apk add libsodium-dev
 
 # fix starting SSL within code
 RUN opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option
+# need to find out what this fix actually is for!
+RUN opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256
 
-RUN opam install lwt tls cohttp bos ezirmin opium sodium macaroons
+#RUN sudo apk add libsodium libsodium-dev libffi-dev
+
+RUN opam depext -i core
+RUN opam depext -i lwt
+RUN opam depext -i tls
+RUN opam depext -i cohttp
+RUN opam depext -i sodium
+RUN opam depext -i macaroons
+RUN opam depext -i opium
+RUN opam depext -i ezirmin
+
+ADD src src
+RUN sudo chown -R opam:nogroup src
