@@ -31,7 +31,7 @@ RUN ./build.sh
 
 EXPOSE 8080
 
-LABEL databox.type="databox-store-iot"
+LABEL databox.type="store"
 
 ENTRYPOINT ["./main.exe"]
 
