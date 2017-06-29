@@ -1,0 +1,39 @@
+{
+  "manifest-version": 1,
+
+  "name": "databox-store-iot",
+  "version": "0.0.1",
+
+  "description": "A simple Databox store for json data",
+  "author": "John Moore <jmoore@zedstar.org>",
+  "license": "MIT",
+
+	"databox-type":"store",
+
+  "tags": [
+    "store",
+    "blob",
+    "db",
+    "native",
+    "json",
+    "timseries"
+  ],
+
+  "homepage": "https://github.com/me-box/databox-store-iot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/me-box/databox-store-iot.git"
+  },
+
+  "network-permissions": [
+  ],
+  
+  "hardware-permissions": [
+  ],
+
+  "resource-requirements": {
+  },
+
+  "volumes": [
+  ]
+}
