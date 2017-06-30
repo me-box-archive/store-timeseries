@@ -43,8 +43,7 @@ let arbiter_token () =
   Fpath.v env.arbiter_token_file |>
   Bos.OS.File.read |>
   Rresult.R.get_ok |>
-  String.strip |>
-  B64.decode
+  B64.encode
 
 let macaroon_secret token =
   let key = ["X-Api-Key", token] in
