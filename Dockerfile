@@ -5,7 +5,7 @@ MAINTAINER jmoore@zedstar.org
 RUN sudo apk add libsodium-dev
 
 # fix problem of missing libraries when install from default opam repo
-RUN opam pin add -n macaroons https://github.com/nojb/ocaml-macaroons.git
+RUN opam pin add -n macaroons https://github.com/me-box/ocaml-macaroons.git
 # fix starting SSL within code
 RUN opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option
 # need to find out what this fix actually is for!

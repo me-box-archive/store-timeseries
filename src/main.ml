@@ -4,6 +4,11 @@ open Lwt.Infix
 
 let epoch () = int_of_float (Unix.time ())
 
+let status = get "/status"
+    begin fun _ ->
+      respond' (`String "active")
+    end
+
 let get_kv = get "/:key/kv"
     begin fun req ->
       let key = param req "key" in
@@ -89,11 +94,15 @@ let with_ssl () =
          
 let with_macaroon () =
   middleware (validate_token ~f:Auth_token.is_valid_token)
+
+let with_port_8080 () =
+  App.port 8080
   
 let run () =
   App.empty
-  |> App.port 8080
+  |> with_port_8080 ()
   |> with_ssl ()
+  |> with_macaroon ()    
   |> post_kv
   |> get_kv
   |> post_ts
@@ -103,7 +112,7 @@ let run () =
   |> get_ts_range
   |> get_hypercat
   |> update_hypercat
-  |> with_macaroon ()
+  |> status
   |> App.run_command
 
 

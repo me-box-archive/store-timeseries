@@ -4,7 +4,7 @@ open Cohttp
 open Cohttp_lwt_unix
 
 type t = {
-  mutable macaroon_secret: string;
+  macaroon_secret_file: string;
   http_key_file: string;
   http_cert_file: string;
   arbiter_endpoint: string;
@@ -13,7 +13,7 @@ type t = {
 }
 
 let env = {
-  macaroon_secret = "";
+  macaroon_secret_file = "/tmp/secret";
   http_key_file = "/tmp/key";
   http_cert_file = "/tmp/cert";
   arbiter_endpoint = "https://databox-arbiter:8080/store/secret";
@@ -22,12 +22,12 @@ let env = {
 }
 
 let set_http_key key =
-  let f = Fpath.v "/tmp/key" in
+  let f = Fpath.v env.http_key_file in
   let _ = Bos.OS.File.write f key in
   ()
 
 let set_http_cert cert =
-  let f = Fpath.v "/tmp/cert" in
+  let f = Fpath.v env.http_cert_file in
   let _ = Bos.OS.File.write f cert in
   ()
 
@@ -59,16 +59,22 @@ let macaroon_secret token =
   let key = ["X-Api-Key", token] in
   let headers = Cohttp.Header.of_list key in
   Client.get ~headers (Uri.of_string env.arbiter_endpoint) >>=
-  fun (_, body) -> body |> Cohttp_lwt_body.to_string  
+  fun (_, body) -> body |> Cohttp_lwt_body.to_string
 
-let set_macaroon_secret key =
-  env.macaroon_secret <- key
 
 let get_macaroon_secret () =
-  env.macaroon_secret
+  Fpath.v env.macaroon_secret_file |>
+  Bos.OS.File.read |>
+  Rresult.R.get_ok
+
+let set_macaroon_secret key =
+  let f = Fpath.v env.macaroon_secret_file in
+  let _ = Bos.OS.File.write f key in
+  ()
 
 let init_macaroon_secret token =
   Lwt_main.run (macaroon_secret token) |>
+  B64.decode |>
   set_macaroon_secret
 
 let init () =
