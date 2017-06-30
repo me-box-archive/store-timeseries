@@ -92,6 +92,7 @@ let with_macaroon () =
   
 let run () =
   App.empty
+  |> App.port 8080
   |> with_ssl ()
   |> post_kv
   |> get_kv
@@ -107,6 +108,6 @@ let run () =
 
 
 let _ =
-  Bootstrap.init (); (* disable this to test locally *)
+  Bootstrap.init ();
   run ()
 

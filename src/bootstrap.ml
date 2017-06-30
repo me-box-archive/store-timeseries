@@ -5,8 +5,8 @@ open Cohttp_lwt_unix
 
 type t = {
   mutable macaroon_secret: string;
-  mutable http_key: string;
-  mutable http_cert: string;
+  http_key_file: string;
+  http_cert_file: string;
   arbiter_endpoint: string;
   arbiter_token_file: string;
   http_certs_file: string;
@@ -14,12 +14,22 @@ type t = {
 
 let env = {
   macaroon_secret = "";
-  http_key = "";
-  http_cert = "";
+  http_key_file = "/tmp/key";
+  http_cert_file = "/tmp/cert";
   arbiter_endpoint = "https://databox-arbiter:8080/store/secret";
   arbiter_token_file = "/run/secrets/ARBITER_TOKEN";
   http_certs_file = "/run/secrets/DATABOX_PEM";
 }
+
+let set_http_key key =
+  let f = Fpath.v "/tmp/key" in
+  let _ = Bos.OS.File.write f key in
+  ()
+
+let set_http_cert cert =
+  let f = Fpath.v "/tmp/cert" in
+  let _ = Bos.OS.File.write f cert in
+  ()
 
 let init_http_cert () =
   Fpath.v env.http_certs_file |>
@@ -30,14 +40,14 @@ let init_http_cert () =
   fun dict ->
   let key = List.Assoc.find_exn dict "clientprivate" ~equal:(=) in
   let cert = List.Assoc.find_exn dict "clientcert" ~equal:(=) in
-  env.http_key <- Ezjsonm.get_string key;
-  env.http_cert <- Ezjsonm.get_string cert
-
+  set_http_key (Ezjsonm.get_string key);
+  set_http_cert (Ezjsonm.get_string cert)
+  
 let get_http_key () =
-  env.http_key
+  env.http_key_file
 
 let get_http_cert () =
-  env.http_cert
+  env.http_cert_file
 
 let arbiter_token () =
   Fpath.v env.arbiter_token_file |>
