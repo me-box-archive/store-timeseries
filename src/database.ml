@@ -1,3 +1,4 @@
+open Core
 open Lwt.Infix
 
 module Store_kv = Ezirmin.FS_lww_register(Irmin.Contents.Json)
@@ -47,7 +48,7 @@ let read_ts_data id n =
 
 (* remove timestamp from dataset *)
 let ts_remove_timestamp l  =
-  List.map (fun (_,json) -> (Ezjsonm.value json)) l |>
+  List.map ~f:(fun (_,json) -> (Ezjsonm.value json)) l |>
   fun l -> Ezjsonm.(`A l)
 
 let read_ts_latest id =
@@ -61,10 +62,10 @@ let read_ts_last id n =
   fun data -> Lwt.return (ts_remove_timestamp data)
 
 let ts_since t l =
-  List.filter (fun (ts,_) -> ts >= t ) l
+  List.filter ~f:(fun (ts,_) -> ts >= t ) l
 
 let ts_until t l =
-  List.filter (fun (ts,_) -> ts < t ) l
+  List.filter ~f:(fun (ts,_) -> ts < t ) l
 
 let ts_range t1 t2 l =
   ts_since t1 l |> ts_until t2

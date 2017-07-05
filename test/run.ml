@@ -1,8 +1,8 @@
+open Core
 open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 open Alcotest
-open Core.Std
 
 let url = "http://127.0.0.1:8080"
 
@@ -116,7 +116,7 @@ module Test_hypercat = struct
   let status_true = "{\"status\":true}"
   let item_count cat =
     let items = Ezjsonm.find cat ["items"] in
-    let alist = Ezjsonm.get_list ident items in
+    let alist = Ezjsonm.get_list Std.ident items in
     List.length alist
   let two_items = 2
 end

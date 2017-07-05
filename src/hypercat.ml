@@ -1,6 +1,6 @@
-open Core.Std
+open Core
 
-let cat = ref (Ezjsonm.from_channel (open_in "base-cat.json"))
+let cat = ref (Ezjsonm.from_channel (In_channel.create "base-cat.json"))
 
 let has_href_and_metadata item =
   let open Ezjsonm in
