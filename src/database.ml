@@ -1,117 +1,102 @@
-open Core.Std
-
-module M = Ezirmin.FS_queue(Tc.Pair (Tc.Int)(Tc.String))
-open M
 open Lwt.Infix
 
+module Store_kv = Ezirmin.FS_lww_register(Irmin.Contents.Json)
+module Store_ts = Ezirmin.FS_log(Tc.Pair (Tc.Int)(Irmin.Contents.Json))
 
-let db = Lwt_main.run (init ~root:"/tmp/ezirminq" ~bare:true () >>= master)
+let kv_store = Lwt_main.run (Store_kv.init ~root:"/tmp/storekv" ~bare:true () >>= Store_kv.master)
+let ts_store = Lwt_main.run (Store_ts.init ~root:"/tmp/storets" ~bare:true () >>= Store_ts.master)
 
-let epoch () = int_of_float (Unix.time ())
+let get_time () = int_of_float (Unix.time ())
 
-let to_object_array list =
-  List.map ~f:(fun (_,string) -> Ezjsonm.from_string string) list
-    
-let since time list =
-  List.filter ~f:(fun (timestamp,_) -> timestamp >= time ) list
-  
-let until time list =
-  List.filter ~f:(fun (timestamp,_) -> timestamp < time ) list
+let json_ok = Ezjsonm.dict [("status", (`Bool true))]
+let json_empty = Ezjsonm.dict []
 
-let range t1 t2 list =
-  since t1 list |> until t2
+(* currently borked: waiting on issue to be fixed in ezirmin *)
+let write_kv k v =
+  Store_kv.write ~message:"write_kv" kv_store ~path:["kv"; k] v >>=
+  fun _ -> Lwt.return json_ok
 
+let read_kv k =
+  Store_kv.read kv_store ~path:["kv"; k] >>=
+  fun data -> match data with
+  | Some json -> Lwt.return json
+  | None -> Lwt.return json_empty
 
-let latest list =
-  let rec last list =
-    match list with
-    | [] -> (0,"{}")
-    | [item] -> item
-    | _::tl -> last tl in
-  last list
+let write_ts id v =
+  let t = get_time () in
+  Store_ts.append ~message:"write_ts" ts_store ~path:["ts"; id] (t,v) >>=
+  fun _ -> Lwt.return json_ok
 
-let first list =
-  match list with
-  | [] -> (0, "{}")
-  | item::_ -> item
+let get_cursor id =
+   Store_ts.get_cursor ts_store ~path:["ts"; id]
+
+let read_from_cursor cursor n =
+  match cursor with
+  | Some c -> Store_ts.read c n
+  | None -> Lwt.return ([], cursor)
+
+(* returns dataset with cursor *)
+let read_ts id n =
+  Store_ts.get_cursor ts_store ~path:["ts"; id] >>=
+  fun cursor -> read_from_cursor cursor n
+
+(* returns just the dataset *)
+let read_ts_data id n =
+  read_ts id n >>=
+  fun (data,_) -> Lwt.return data
+
+(* remove timestamp from dataset *)
+let ts_remove_timestamp l  =
+  List.map (fun (_,json) -> (Ezjsonm.value json)) l |>
+  fun l -> Ezjsonm.(`A l)
 
 let read_ts_latest id =
-  Lwt.bind
-    (to_list db ~path:["ts"; id])
-    (fun list ->
-       let (_,string) = latest list in
-       let timestamp = epoch () in
-       let _ = Lwt_log.info_f "%d:read_ts_latest -> value:%s\n" timestamp string in
-       let json = Ezjsonm.from_string string in
-       Lwt.return (json))
+  read_ts id 1 >>=
+  fun (data,_) -> match data with
+  | [] -> Lwt.return json_empty
+  | (_,json)::_ -> Lwt.return json
 
+let read_ts_last id n =
+  read_ts_data id n >>=
+  fun data -> Lwt.return (ts_remove_timestamp data)
 
-let read_kv id =
-  Lwt.bind
-    (to_list db ~path:["kv"; id])
-    (fun list ->
-       let (_,string) = first list in
-       let timestamp = epoch () in
-       let _ = Lwt_log.info_f "%d:read_kv -> value:%s\n" timestamp string in
-       let json = Ezjsonm.from_string string in
-       Lwt.return (json))
+let ts_since t l =
+  List.filter (fun (ts,_) -> ts >= t ) l
 
+let ts_until t l =
+  List.filter (fun (ts,_) -> ts < t ) l
 
-let read_ts_since id from =
-  let open Ezjsonm in
-  Lwt.bind
-    (to_list db ~path:["ts"; id])
-    (fun list ->
-       let l1 = since from list in
-       let l2 = to_object_array l1 in
-       let len = List.length l2 in
-       let timestamp = epoch () in
-       let _ = Lwt_log.info_f "%d:read_ts_since -> returning %d items\n" timestamp len in
-       Lwt.return (`A l2))    
+let ts_range t1 t2 l =
+  ts_since t1 l |> ts_until t2
+
+let read_ts_last_since id n t =
+  read_ts_data id n >>=
+  fun l -> Lwt.return (ts_remove_timestamp (ts_since t l))
+
+let read_ts_last_range id n t1 t2 =
+  read_ts_data id n >>=
+  fun l -> Lwt.return (ts_remove_timestamp (ts_range t1 t2 l))
+
+let read_ts_data_all id =
+  Store_ts.read_all ts_store ~path:["ts"; id]
+
+(* might need to look at paging this back for large sets *)
+let read_ts_all id =
+  read_ts_data_all id >>=
+  fun data -> Lwt.return (ts_remove_timestamp data)
+
+let read_ts_since id t  =
+  read_ts_data_all id >>=
+  fun l -> Lwt.return (ts_remove_timestamp (ts_since t l))
 
 let read_ts_range id t1 t2 =
-  let open Ezjsonm in
-  Lwt.bind
-    (to_list db ~path:["ts"; id])
-    (fun list ->
-       let l1 = range t1 t2 list in
-       let l2 = to_object_array l1 in
-       let len = List.length l2 in
-       let timestamp = epoch () in
-       let _ = Lwt_log.info_f "%d:read_ts_range -> returning %d items\n" timestamp len in
-       Lwt.return (`A l2)) 
+  read_ts_data_all id >>=
+  fun l -> Lwt.return (ts_remove_timestamp (ts_range t1 t2 l))
 
-let remove_ts_latest k =
-  let unwrap tuple = match tuple with
-    | Some tuple -> tuple
-    | None -> (0,"{}") in
-  Lwt.bind
-    (pop ~message:"remove_ts_latest" db ~path:["ts"; k])
-    (fun resp ->
-       let (_,string) = unwrap resp in
-       let timestamp = epoch () in
-       let _ = Lwt_log.info_f "%d:read_kv_queue -> value:%s\n" timestamp string in
-       let json = Ezjsonm.from_string string in
-       Lwt.return (json))
-    
-let write_kv key json =
-  let open Ezjsonm in
-  let string = to_string json in
-  let timestamp = epoch () in
-  let _ = Lwt_log.info_f "%d:write_kv -> key:%s, value:%s\n" timestamp key string in
-  create ~message:"create kv" db ~path:["kv"; key] (* always start with empty db *)
-  >>= (fun _ ->
-      let message = (Printf.sprintf "write_kv:%d" timestamp) in
-      push ~message:message db ~path:["kv"; key] (timestamp,string))
-  >>= (fun _ -> Lwt.return (dict [("status", (`Bool true))]))
-      
 
-let write_ts id json =
-  let open Ezjsonm in
-  let string = to_string json in
-  let timestamp = epoch () in
-  let _ = Lwt_log.info_f "%d:write_ts -> id:%s, value:%s\n" timestamp id string in
-  let message = (Printf.sprintf "write_ts:%d" timestamp) in
-  push ~message:message db ~path:["ts"; id] (timestamp,string)
-  >>= (fun _ -> Lwt.return (dict [("status", (`Bool true))]))
+
+
+
+
+
 

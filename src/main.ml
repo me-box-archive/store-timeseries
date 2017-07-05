@@ -39,13 +39,6 @@ let get_ts_latest = get "/:id/ts/latest"
       >>= (fun resp -> respond' (`Json resp))
     end
 
-let remove_ts_latest = get "/:id/ts/remove/latest"
-    begin fun req ->
-      let id = param req "id" in
-      Database.remove_ts_latest id
-      >>= (fun resp -> respond' (`Json resp))
-    end
-
 let get_ts_since = get "/:id/ts/since/:from"
     begin fun req ->
       let id = param req "id" in
@@ -101,13 +94,12 @@ let with_port_8080 () =
 let run () =
   App.empty
   |> with_port_8080 ()
-  |> with_ssl ()
-  |> with_macaroon ()    
+(*  |> with_ssl ()
+  |> with_macaroon () *)    
   |> post_kv
   |> get_kv
   |> post_ts
   |> get_ts_latest
-  |> remove_ts_latest
   |> get_ts_since
   |> get_ts_range
   |> get_hypercat
@@ -117,6 +109,6 @@ let run () =
 
 
 let _ =
-  Bootstrap.init ();
+(*  Bootstrap.init (); *)
   run ()
 

@@ -4,7 +4,7 @@ open Cohttp_lwt_unix
 open Alcotest
 open Core.Std
 
-let url = "http://127.0.0.1:3000"
+let url = "http://127.0.0.1:8080"
 
 let get path =
   Client.get (Uri.of_string (url ^ path))
@@ -48,12 +48,10 @@ let test_kv = [
 
 module Test_ts = struct
   let post_ts path data = Lwt_main.run (post path data)
-  let remove_ts_latest path =  Lwt_main.run (get path)
   let get_ts_latest path =  Lwt_main.run (get path)
   let get_ts_since path = Lwt_main.run (get path)
   let get_ts_range path = Lwt_main.run (get path)
   let key = "/foo/ts"
-  let key_remove_latest = "/foo/ts/remove/latest"
   let key_latest = "/foo/ts/latest"
   let key_since = "/foo/ts/since/0"
   let key_range = "/foo/ts/range"
@@ -68,9 +66,6 @@ end
 
 let post_ts () =
   Alcotest.(check string) "status true" Test_ts.status_true (Test_ts.post_ts Test_ts.key Test_ts.value)
-
-let remove_ts_latest () =
-  Alcotest.(check string) "match value" Test_ts.value (Test_ts.remove_ts_latest Test_ts.key_remove_latest)
 
 let get_ts_latest_empty () =
   Alcotest.(check string) "match empty" Test_ts.value_not_found (Test_ts.get_ts_latest Test_ts.key_latest)
@@ -94,21 +89,12 @@ let get_ts_range () =
   Alcotest.(check string) "match value" Test_ts.value_array (Test_ts.get_ts_range path)
 
 let test_ts = [
-  (* add 3 values *)
-  "post ts" , `Quick, post_ts;
-  "post ts" , `Quick, post_ts;
-  "post ts" , `Quick, post_ts;
-  (* remove 3 values *)
-  "remove ts latest" , `Quick, remove_ts_latest;
-  "remove ts latest" , `Quick, remove_ts_latest;
-  "remove ts latest" , `Quick, remove_ts_latest;
   (* check empty *)
   "get ts latest empty" , `Quick, get_ts_latest_empty;
   (* add 3 values *)
   "post ts" , `Quick, post_ts;
   "post ts" , `Quick, post_ts;
   "post ts" , `Quick, post_ts;
-  (* get latest *)
   "get ts latest" , `Quick, get_ts_latest;
   (* get since *)
   "get ts since start of time" , `Quick, get_ts_since;
@@ -116,10 +102,6 @@ let test_ts = [
   "get ts range empty" , `Quick, get_ts_range_empty;
   (* get range *)
   "get ts range" , `Quick, get_ts_range; 
-  (* remove values to leave empty state *)
-  "remove ts latest" , `Quick, remove_ts_latest;
-  "remove ts latest" , `Quick, remove_ts_latest;
-  "remove ts latest" , `Quick, remove_ts_latest;
 ]
 
 
