@@ -8,6 +8,8 @@ RUN opam pin add -n macaroons https://github.com/me-box/ocaml-macaroons.git
 RUN opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option
 # need to find out what this fix actually is for!
 RUN opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256
+# fix for kv store
+RUN opam pin add ezirmin -n -k http https://github.com/kayceesrk/ezirmin/releases/download/0.2.1/ezirmin-0.2.1.tbz
 
 # install dependencies
 RUN sudo apk add libsodium-dev && \

@@ -123,7 +123,7 @@ let run () =
   App.empty
   |> with_port_8080 ()
   |> with_ssl ()
-  |> with_macaroon ()    
+(*  |> with_macaroon () *)   
   |> post_kv
   |> get_kv
   |> post_ts
@@ -140,6 +140,6 @@ let run () =
 
 
 let _ =
-(*  Bootstrap.init (); *) 
+  Bootstrap.init ();  
   run ()
 
