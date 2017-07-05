@@ -49,15 +49,22 @@ let test_kv = [
 module Test_ts = struct
   let post_ts path data = Lwt_main.run (post path data)
   let get_ts_latest path =  Lwt_main.run (get path)
+  let get_ts_last_three path =  Lwt_main.run (get path)
   let get_ts_since path = Lwt_main.run (get path)
+  let get_ts_last_since path = Lwt_main.run (get path)
   let get_ts_range path = Lwt_main.run (get path)
+  let get_ts_last_range path = Lwt_main.run (get path)
   let key = "/foo/ts"
   let key_latest = "/foo/ts/latest"
+  let key_last_three_since = "/foo/ts/last/3"
   let key_since = "/foo/ts/since/0"
+  let key_last_two_since = "/foo/ts/last/2/since/0"
   let key_range = "/foo/ts/range"
+  let key_last_three_range = "/foo/ts/last/3/range"
   let key_range_empty = "/foo/ts/range/0/0"
   let value = "{\"bar\":42}"
-  let value_array = "[{\"bar\":42},{\"bar\":42},{\"bar\":42}]"
+  let value_three_array = "[{\"bar\":42},{\"bar\":42},{\"bar\":42}]"
+  let value_two_array = "[{\"bar\":42},{\"bar\":42}]"
   let status_true = "{\"status\":true}"
   let key_not_found = "/bar/ts"
   let value_not_found = "{}"
@@ -73,8 +80,14 @@ let get_ts_latest_empty () =
 let get_ts_latest () =
   Alcotest.(check string) "match value" Test_ts.value (Test_ts.get_ts_latest Test_ts.key_latest)
 
+let get_ts_last_three () =
+  Alcotest.(check string) "match value" Test_ts.value_three_array (Test_ts.get_ts_last_three Test_ts.key_last_three_since)
+
 let get_ts_since () =
-  Alcotest.(check string) "match value" Test_ts.value_array (Test_ts.get_ts_since Test_ts.key_since)
+  Alcotest.(check string) "match value" Test_ts.value_three_array (Test_ts.get_ts_since Test_ts.key_since)
+
+let get_ts_last_since () =
+  Alcotest.(check string) "match value" Test_ts.value_two_array (Test_ts.get_ts_last_since Test_ts.key_last_two_since)
 
 let get_ts_range_empty () =
   Alcotest.(check string) "match empty" Test_ts.value_array_empty (Test_ts.get_ts_range Test_ts.key_range_empty)
@@ -86,7 +99,16 @@ let get_ts_range () =
   let t1 = Printf.sprintf "%d" ten_seconds_before in
   let t2 = Printf.sprintf "%d" ten_seconds_after in
   let path = Test_ts.key_range ^ "/" ^ t1 ^ "/" ^ t2 in
-  Alcotest.(check string) "match value" Test_ts.value_array (Test_ts.get_ts_range path)
+  Alcotest.(check string) "match value" Test_ts.value_three_array (Test_ts.get_ts_range path)
+
+let get_ts_last_range () =
+  let now = int_of_float (Unix.time ()) in
+  let ten_seconds_before = now - 10 in
+  let ten_seconds_after = now + 10 in
+  let t1 = Printf.sprintf "%d" ten_seconds_before in
+  let t2 = Printf.sprintf "%d" ten_seconds_after in
+  let path = Test_ts.key_last_three_range ^ "/" ^ t1 ^ "/" ^ t2 in
+  Alcotest.(check string) "match value" Test_ts.value_three_array (Test_ts.get_ts_last_range path)
 
 let test_ts = [
   (* check empty *)
@@ -95,13 +117,20 @@ let test_ts = [
   "post ts" , `Quick, post_ts;
   "post ts" , `Quick, post_ts;
   "post ts" , `Quick, post_ts;
+  (* get last *)
   "get ts latest" , `Quick, get_ts_latest;
+  (* get last 3 *)
+  "get ts last three", `Quick, get_ts_last_three;
   (* get since *)
   "get ts since start of time" , `Quick, get_ts_since;
+  (* get since from 1 item *)
+  "get ts last 2 since start of time" , `Quick, get_ts_last_since; 
   (* nothing in range *)
   "get ts range empty" , `Quick, get_ts_range_empty;
   (* get range *)
-  "get ts range" , `Quick, get_ts_range; 
+  "get ts range" , `Quick, get_ts_range;
+  (* get last 3 in range *)
+  "get ts last range" , `Quick, get_ts_last_range;
 ]
 
 
@@ -111,12 +140,12 @@ module Test_hypercat = struct
   let add_item1 path item = Lwt_main.run (post path item)
   let add_item2 = add_item1
   let get_cat path = Lwt_main.run (get path)
-  let item1 = Ezjsonm.to_string (Ezjsonm.from_channel (open_in "item1.json"))
-  let item2 = Ezjsonm.to_string (Ezjsonm.from_channel (open_in "item2.json"))
+  let item1 = Ezjsonm.to_string (Ezjsonm.from_channel (In_channel.create "item1.json"))
+  let item2 = Ezjsonm.to_string (Ezjsonm.from_channel (In_channel.create "item2.json"))
   let status_true = "{\"status\":true}"
   let item_count cat =
     let items = Ezjsonm.find cat ["items"] in
-    let alist = Ezjsonm.get_list Std.ident items in
+    let alist = Ezjsonm.get_list ident items in
     List.length alist
   let two_items = 2
 end

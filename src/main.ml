@@ -39,11 +39,28 @@ let get_ts_latest = get "/:id/ts/latest"
       >>= (fun resp -> respond' (`Json resp))
     end
 
+let get_ts_last = get "/:id/ts/last/:n"
+    begin fun req ->
+      let id = param req "id" in
+      let n = param req "n" in
+      Database.read_ts_last id (int_of_string n)
+      >>= (fun resp -> respond' (`Json resp))
+    end
+
 let get_ts_since = get "/:id/ts/since/:from"
     begin fun req ->
       let id = param req "id" in
       let from = param req "from" in
       Database.read_ts_since id (int_of_string from)
+      >>= (fun resp -> respond' (`Json resp))
+    end
+
+let get_ts_last_since = get "/:id/ts/last/:n/since/:from"
+    begin fun req ->
+      let id = param req "id" in
+      let n = param req "n" in
+      let from = param req "from" in
+      Database.read_ts_last_since id (int_of_string n) (int_of_string from)
       >>= (fun resp -> respond' (`Json resp))
     end
 
@@ -55,6 +72,17 @@ let get_ts_range = get "/:id/ts/range/:from/:to"
       Database.read_ts_range id (int_of_string t1) (int_of_string t2)
       >>= (fun resp -> respond' (`Json resp))
     end
+
+let get_ts_last_range = get "/:id/ts/last/:n/range/:from/:to"
+    begin fun req ->
+      let id = param req "id" in
+      let n = param req "n" in
+      let t1 = param req "from" in
+      let t2 = param req "to" in
+      Database.read_ts_last_range id (int_of_string n) (int_of_string t1) (int_of_string t2)
+      >>= (fun resp -> respond' (`Json resp))
+    end
+
 
 let get_hypercat = get "/cat"
     begin fun _ ->
@@ -100,8 +128,11 @@ let run () =
   |> get_kv
   |> post_ts
   |> get_ts_latest
+  |> get_ts_last
   |> get_ts_since
+  |> get_ts_last_since
   |> get_ts_range
+  |> get_ts_last_range
   |> get_hypercat
   |> update_hypercat
   |> status
