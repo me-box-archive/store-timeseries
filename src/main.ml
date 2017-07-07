@@ -2,7 +2,11 @@ open Core
 open Opium.Std
 open Lwt.Infix
 
-let epoch () = int_of_float (Unix.time ())
+(* create the stores *)
+let kv_store = Database.create_kv_store ~file:"/tmp/storekv"
+let ts_store = Database.create_ts_store ~file:"/tmp/storets"
+
+let get_time () = int_of_float (Unix.time ())
 
 let status = get "/status"
     begin fun _ ->
@@ -12,7 +16,7 @@ let status = get "/status"
 let get_kv = get "/:key/kv"
     begin fun req ->
       let key = param req "key" in
-      Database.read_kv key
+      Database.read_kv kv_store key
       >>= (fun resp -> respond' (`Json resp))
     end
     
@@ -20,7 +24,7 @@ let post_kv = post "/:key/kv"
     begin fun req ->
       let key = param req "key" in
       (req |> App.json_of_body_exn)
-      >>= fun body -> Database.write_kv key body
+      >>= fun body -> Database.write_kv kv_store key body
       >>= fun resp -> respond' (`Json resp)
     end    
 
@@ -28,14 +32,14 @@ let post_ts = post "/:id/ts"
     begin fun req ->
       let id = param req "id" in
       (req |> App.json_of_body_exn)
-      >>= fun body -> Database.write_ts id body
+      >>= fun body -> Database.write_ts ts_store id body
       >>= fun resp -> respond' (`Json resp)
     end    
 
 let get_ts_latest = get "/:id/ts/latest"
     begin fun req ->
       let id = param req "id" in
-      Database.read_ts_latest id
+      Database.read_ts_latest ts_store id
       >>= (fun resp -> respond' (`Json resp))
     end
 
@@ -43,7 +47,7 @@ let get_ts_last = get "/:id/ts/last/:n"
     begin fun req ->
       let id = param req "id" in
       let n = param req "n" in
-      Database.read_ts_last id (int_of_string n)
+      Database.read_ts_last ts_store id (int_of_string n)
       >>= (fun resp -> respond' (`Json resp))
     end
 
@@ -51,7 +55,7 @@ let get_ts_since = get "/:id/ts/since/:from"
     begin fun req ->
       let id = param req "id" in
       let from = param req "from" in
-      Database.read_ts_since id (int_of_string from)
+      Database.read_ts_since ts_store id (int_of_string from)
       >>= (fun resp -> respond' (`Json resp))
     end
 
@@ -60,7 +64,7 @@ let get_ts_last_since = get "/:id/ts/last/:n/since/:from"
       let id = param req "id" in
       let n = param req "n" in
       let from = param req "from" in
-      Database.read_ts_last_since id (int_of_string n) (int_of_string from)
+      Database.read_ts_last_since ts_store id (int_of_string n) (int_of_string from)
       >>= (fun resp -> respond' (`Json resp))
     end
 
@@ -69,7 +73,7 @@ let get_ts_range = get "/:id/ts/range/:from/:to"
       let id = param req "id" in
       let t1 = param req "from" in
       let t2 = param req "to" in
-      Database.read_ts_range id (int_of_string t1) (int_of_string t2)
+      Database.read_ts_range ts_store id (int_of_string t1) (int_of_string t2)
       >>= (fun resp -> respond' (`Json resp))
     end
 
@@ -79,14 +83,14 @@ let get_ts_last_range = get "/:id/ts/last/:n/range/:from/:to"
       let n = param req "n" in
       let t1 = param req "from" in
       let t2 = param req "to" in
-      Database.read_ts_last_range id (int_of_string n) (int_of_string t1) (int_of_string t2)
+      Database.read_ts_last_range ts_store id (int_of_string n) (int_of_string t1) (int_of_string t2)
       >>= (fun resp -> respond' (`Json resp))
     end
 
 
 let get_hypercat = get "/cat"
     begin fun _ ->
-      let _ = Lwt_log.info_f "%d:Requesting cat\n" (epoch ()) in
+      let _ = Lwt_log.info_f "%d:Requesting cat\n" (get_time ()) in
       let resp = Hypercat.get_cat () in
       respond' (`Json resp) 
     end
@@ -95,7 +99,7 @@ let update_hypercat = post "/cat"
     begin fun req ->
       (req |> App.json_of_body_exn)
       >>= fun body ->
-      let _ = Lwt_log.info_f "%d:Updating cat\n" (epoch ()) in
+      let _ = Lwt_log.info_f "%d:Updating cat\n" (get_time ()) in
       let resp = Hypercat.update_cat (Ezjsonm.value body) in
       respond' (`Json resp)
     end
@@ -123,7 +127,7 @@ let run () =
   App.empty
   |> with_port_8080 ()
   |> with_ssl ()
-(*  |> with_macaroon () *)   
+  |> with_macaroon ()
   |> post_kv
   |> get_kv
   |> post_ts
@@ -140,6 +144,6 @@ let run () =
 
 
 let _ =
-  Bootstrap.init ();  
+  (*Bootstrap.init ();*)
   run ()
 
