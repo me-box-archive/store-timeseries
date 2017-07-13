@@ -1,7 +1,7 @@
 {
   "manifest-version": 1,
 
-  "name": "databox-store-iot",
+  "name": "store-timeseries",
   "version": "0.0.1",
 
   "description": "A simple Databox store for json data",
@@ -19,10 +19,10 @@
     "timseries"
   ],
 
-  "homepage": "https://github.com/me-box/databox-store-iot",
+  "homepage": "https://github.com/me-box/store-timeseries",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/me-box/databox-store-iot.git"
+    "url": "git+https://github.com/me-box/store-timeseries.git"
   },
 
   "network-permissions": [
