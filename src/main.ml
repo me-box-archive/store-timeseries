@@ -5,13 +5,30 @@ open Lwt.Infix
 (* create the stores *)
 let kv_store = Database.create_kv_store ~file:"/tmp/storekv"
 let ts_store = Database.create_ts_store ~file:"/tmp/storets"
-
+let image_store = Database.create_image_store ~file:"/tmp/storeimage"
+    
 let get_time () = int_of_float (Unix.time ())
 
 let status = get "/status"
     begin fun _ ->
       respond' (`String "active")
     end
+
+let get_image = get "/:key/image"
+    begin fun req ->
+      let key = param req "key" in
+      let headers = Cohttp.Header.init_with "content-type" "image/jpeg" in
+      Database.read_image image_store key
+      >>= (fun resp -> respond' ~headers:headers (`Html resp))
+    end
+
+let post_image = post "/:id/image"
+    begin fun req ->
+      let id = param req "id" in
+      (req |> App.string_of_body_exn)
+      >>= fun body -> Database.write_image image_store id body
+      >>= fun resp -> respond' (`Html resp)
+    end 
 
 let get_kv = get "/:key/kv"
     begin fun req ->
@@ -128,6 +145,8 @@ let run () =
   |> with_port_8080 ()
   |> with_ssl ()
   |> with_macaroon ()
+  |> post_image
+  |> get_image
   |> post_kv
   |> get_kv
   |> post_ts

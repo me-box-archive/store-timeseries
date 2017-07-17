@@ -3,6 +3,8 @@ open Lwt.Infix
 
 module Store_kv = Ezirmin.FS_lww_register(Irmin.Contents.Json)
 module Store_ts = Ezirmin.FS_log(Tc.Pair (Tc.Int)(Irmin.Contents.Json))
+module Store_image = Ezirmin.FS_lww_register(Irmin.Contents.String)
+      
 
 let get_time () = int_of_float (Unix.time ())
 
@@ -14,6 +16,21 @@ let create_kv_store ~file =
 
 let create_ts_store ~file =
   Store_ts.init ~root:file ~bare:true () >>= Store_ts.master
+
+let create_image_store ~file =
+  Store_image.init ~root:file ~bare:true () >>= Store_image.master
+
+let write_image store k v =
+  store >>= fun store' ->
+  Store_image.write ~message:"write_image" store' ~path:["image"; k] v >>=
+  fun _ -> Lwt.return ""
+
+let read_image store k =
+  store >>= fun store ->
+  Store_image.read store ~path:["image"; k] >>=
+  fun data -> match data with
+  | Some string -> Lwt.return string
+  | None -> Lwt.return ""
 
 let write_kv store k v =
   store >>= fun store' ->
