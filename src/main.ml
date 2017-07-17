@@ -22,12 +22,15 @@ let get_image = get "/:key/image"
       >>= (fun resp -> respond' ~headers:headers (`Html resp))
     end
 
-let post_image = post "/:id/image"
+let post_ts_image = post "/:id/image"
     begin fun req ->
+      let uuid = Uuid.create () |> Uuid.to_string in
+      let json_uuid = Ezjsonm.dict [("uuid", (`String uuid))] in
       let id = param req "id" in
-      (req |> App.string_of_body_exn)
-      >>= fun body -> Database.write_image image_store id body
-      >>= fun resp -> respond' (`Html resp)
+      (req |> App.string_of_body_exn) >>=
+      fun body -> Database.write_image image_store uuid body >>=
+      fun _ -> Database.write_ts ts_store id json_uuid >>=
+      fun resp -> respond' (`Json resp)
     end 
 
 let get_kv = get "/:key/kv"
@@ -145,7 +148,7 @@ let run () =
   |> with_port_8080 ()
   |> with_ssl ()
   |> with_macaroon ()
-  |> post_image
+  |> post_ts_image
   |> get_image
   |> post_kv
   |> get_kv
