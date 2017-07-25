@@ -2,8 +2,8 @@
 
 module Macaroon = Sodium_macaroons
 
-let mint_token ?(id = "id") ?(location = "location") ?(key = "key")
-    ?(target = "target") ?(meth = "method") ~path =
+let mint_token ?(id = "id") ?(location = "location") ?(path = "path")
+    ?(target = "target") ?(meth = "method") ~key =
   let m = Macaroon.create ~id ~location ~key in
   let m = Macaroon.add_first_party_caveat m target in
   let m = Macaroon.add_first_party_caveat m path in
@@ -20,7 +20,7 @@ let validate_macaroon m secret =
 let is_valid_token token key =
   match Macaroon.deserialize token with
   | `Ok m -> (validate_macaroon m key)
-  | `Error _ -> false
+  | `Error _ -> failwith "could not deserialize macaroon"
 
 
 
