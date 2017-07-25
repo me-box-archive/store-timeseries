@@ -2,8 +2,9 @@ FROM ocaml/opam:alpine
 
 MAINTAINER jmoore@zedstar.org
 
-# fix problem of missing libraries when install from default opam repo
-RUN opam pin add -n macaroons https://github.com/me-box/ocaml-macaroons.git
+# set opam repo
+RUN opam remote remove default && opam remote add default https://opam.ocaml.org && opam update && opam upgrade
+
 # fix starting SSL within code
 RUN opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option
 # need to find out what this fix actually is for!
