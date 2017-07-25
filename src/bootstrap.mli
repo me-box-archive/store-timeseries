@@ -1,5 +1,5 @@
 
-val init : unit -> unit
+val init : unit -> unit Lwt.t
 
 val get_macaroon_secret : unit -> string
 
