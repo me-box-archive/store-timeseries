@@ -129,7 +129,8 @@ let validate_token ~f =
     (* note we need to refuse when no X-Api-Key still *)
     match Cohttp.Header.get (Request.headers req) "X-Api-Key" with
     | Some token when not (f token (Bootstrap.get_macaroon_secret ())) ->
-      (*let _ = Out_channel.write_all "/tmp/received_token.txt" ~data:token in*)
+      let _ = Out_channel.write_all "/tmp/received_token.txt" ~data:token in
+      let _ = Out_channel.write_all "/tmp/received_secret.txt" ~data:(Bootstrap.get_macaroon_secret ()) in
       `String ("Failed to validate macaroon") |> respond'
     | _ -> handler req in
   Rock.Middleware.create ~filter ~name:"validate_token"

@@ -43,7 +43,7 @@ let set_macaroon_secret key =
 
 let init_macaroon_secret token =
   macaroon_secret token >>=
-  fun secret -> Lwt.return (set_macaroon_secret (B64.decode secret))
+  fun secret -> Lwt.return (set_macaroon_secret secret)
 
 let init () =
   init_macaroon_secret (arbiter_token ())
