@@ -1,50 +1,71 @@
 ## Time series datatore
 
-JSON data store for time series and key/value data.
+Store JSON or JPEG images.
 
-### Key/Value API
-
-#### Read entry
-
-    URL: /<key>/kv/
-    Method: GET
-    Parameters: replace <key> with document key
-    Notes: return the data stored with key
-    
-#### Write entry
-
-    URL: /<key>/kv/
-    Method: POST
-    Parameters: JSON body of data
-    Notes: add data using key and overwrite any existing data
-    
-### Time series database API
+### JSON API
 
 #### Read latest entry
-    URL: /ts/latest
+    URL: /<id>/ts/latest/
     Method: GET
-    Parameters: 
+    Parameters: replace <id> with an identifier
     Notes: return the latest entry
     
-#### Read last entries
+#### Read last number of entries
     
-    URL: /ts/last/<n>
+    URL: /<id>/ts/last/<n>/
     Method: GET
-    Parameters: replace <n> with the number of entries
+    Parameters: replace <id> with an identifier, replace <n> with the number of entries
     Notes: return the number of entries requested
     
     
-#### Read last entries since time (unix epoch)
+#### Read all entries since a time
     
-    URL: /ts/since/<t>
+    URL: /<id>/ts/since/<from>/
     Method: GET
-    Parameters: replace <t> with epoch seconds
-    Notes: return the number of entries requested since time provided
+    Parameters: replace <id> with an identifier, replace <from> with epoch seconds
+    Notes: return the number of entries from time provided
     
-#### Read last entries since time (unix epoch)
+#### Read all entries in a time range
     
-    URL: /ts/since/<t>
+    URL: /<id>/ts/range/<from>/<to>/
     Method: GET
-    Parameters: replace <t> with epoch seconds
-    Notes: return the number of entries requested since time provided
+    Parameters: replace <id> with an identifier, replace <from> and <to> with epoch seconds
+    Notes: return the number of entries in time range provided
     
+#### Read last number of entries then restrict since a time
+    
+    URL: /<id>/ts/last/<n>/since/<from>/
+    Method: GET
+    Parameters: replace <id> with an identifier, replace <n> with the number of entries, replace <from> with epoch seconds
+    Notes: return the last number of entries and then filter result on time
+    
+#### Read last number of entries then restrict in a time range
+    
+    URL: /<id>/ts/last/<n>/range/<from>/<to>/
+    Method: GET
+    Parameters: replace <id> with an identifier, replace <n> with the number of entries, replace <from> and <to> with epoch seconds
+    Notes: return the last number of entries and then filter result on time
+    
+#### Write entry
+    URL: /<id>/ts/
+    Method: POST
+    Parameters: JSON body of data, replace <id> with an identifier
+    Notes: add data to time series with given identifier
+
+### Image API
+
+Allows JPEGs to be stored and retrieved based on a UUID. To retrieve an image first query the time series identifier to get a list of entries and then retrieve a specific image using a specific UUID. TODO: Store image Exif data with the UUID and allow searching on the meta-data
+
+#### Read image
+
+    URL: /<uuid>/image/
+    Method: GET
+    Parameters: replace <uuid> with image UUID
+    Notes: return the image stored with UUID
+    
+#### Write image
+
+    URL: /<id>/image/
+    Method: POST
+    Parameters: body of image data, replace <id> with an identifier
+    Notes: add image to time series with given identifier  
