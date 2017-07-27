@@ -6,6 +6,10 @@ open Lwt.Infix
 let kv_store = Database.create_kv_store ~file:"/tmp/storekv"
 let ts_store = Database.create_ts_store ~file:"/tmp/storets"
 let image_store = Database.create_image_store ~file:"/tmp/storeimage"
+
+(* http credentials *)
+let http_cert = Bootstrap.get_http_cert ()
+let http_key = Bootstrap.get_http_key () 
     
 let get_time () = int_of_float (Unix.time ())
 
@@ -126,17 +130,21 @@ let update_hypercat = post "/cat"
 
 let validate_token ~f =
   let filter handler req =
-    (* note we need to refuse when no X-Api-Key still *)
-    match Cohttp.Header.get (Request.headers req) "X-Api-Key" with
-    | Some token when not (f token (Bootstrap.get_macaroon_secret ())) ->
-      let _ = Out_channel.write_all "/tmp/received_token.txt" ~data:token in
-      let _ = Out_channel.write_all "/tmp/received_secret.txt" ~data:(Bootstrap.get_macaroon_secret ()) in
-      `String ("Failed to validate macaroon") |> respond'
-    | _ -> handler req in
+    let code = `Unauthorized in
+    let headers = Request.headers req in
+    let token = Cohttp.Header.get headers "X-Api-Key" in
+    match token with
+    | None ->
+      `String "Missing/Invalid API key" |> respond' ~code
+    | Some token ->
+      let secret = Bootstrap.get_macaroon_secret () in
+      if not (f token secret) then
+        `String "Failed to validate macaroon" |> respond' ~code
+      else handler req in
   Rock.Middleware.create ~filter ~name:"validate_token"
-
+          
 let with_ssl () =
-  App.ssl ~cert:(Bootstrap.get_http_cert ()) ~key:(Bootstrap.get_http_key ())
+  App.ssl ~cert:http_cert ~key:http_key
          
 let with_macaroon () =
   middleware (validate_token ~f:Auth_token.is_valid_token)
