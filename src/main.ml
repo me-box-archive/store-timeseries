@@ -10,8 +10,20 @@ let image_store = Database.create_image_store ~file:"/tmp/storeimage"
 (* http credentials *)
 let http_cert = Bootstrap.get_http_cert ()
 let http_key = Bootstrap.get_http_key () 
-    
+
+(* utility funcs *)
 let get_time () = int_of_float (Unix.time ())
+
+let prefix_path s =
+  String.split s ':' |>
+  List.last_exn |>
+  fun s' -> "path = " ^ String.drop_prefix s' 4
+
+let prefix_meth s =
+  "method = " ^ s
+
+let prefix_target s =
+  "target = " ^ s
 
 let status = get "/status"
     begin fun _ ->
@@ -128,6 +140,7 @@ let update_hypercat = post "/cat"
       respond' (`Json resp)
     end
 
+
 let validate_token ~f =
   let filter handler req =
     let code = `Unauthorized in
@@ -137,6 +150,10 @@ let validate_token ~f =
     | None ->
       `String "Missing/Invalid API key" |> respond' ~code
     | Some token ->
+      let meth = req |> Request.meth |> Cohttp.Code.string_of_method |> prefix_meth in
+      let path = req |> Request.uri |> Uri.to_string |> prefix_path in
+      let target = Bootstrap.get_local_name () |> prefix_target in
+      Auth_token.set_network_credentials [target; meth; path];
       let secret = Bootstrap.get_macaroon_secret () in
       if not (f token secret) then
         `String "Failed to validate macaroon" |> respond' ~code

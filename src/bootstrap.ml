@@ -5,6 +5,7 @@ open Cohttp_lwt_unix
 
 type t = {
   mutable macaroon_secret: string;
+  mutable local_name: string;
   arbiter_endpoint: string;
   arbiter_token_file: string;
   http_certs_file: string;
@@ -12,6 +13,7 @@ type t = {
 
 let env = {
   macaroon_secret = "";
+  local_name = "";
   arbiter_endpoint = "https://arbiter:8080/store/secret";
   arbiter_token_file = "/run/secrets/ARBITER_TOKEN";
   http_certs_file = "/run/secrets/DATABOX.pem";
@@ -45,5 +47,14 @@ let init_macaroon_secret token =
   macaroon_secret token >>=
   fun secret -> Lwt.return (set_macaroon_secret secret)
 
+let set_local_name () =
+  match Sys.getenv "DATABOX_LOCAL_NAME" with
+  | Some name -> env.local_name <- name
+  | None -> failwith "could not get local name"
+
+let get_local_name () =
+  env.local_name
+
 let init () =
+  set_local_name ();
   init_macaroon_secret (arbiter_token ())
