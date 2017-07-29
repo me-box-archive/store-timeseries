@@ -27,7 +27,6 @@ RUN sudo apk add --no-cache --virtual .build-deps alpine-sdk bash ncurses-dev m4
 && opam install -y core lwt tls sodium macaroons opium cohttp ezirmin bos \
 && sudo chmod +x build.sh && sync \
 && ./build.sh \
-#&& sudo apk del alpine-sdk bash ncurses-dev m4 perl libffi-dev libsodium-dev opam \
 && rm -rf /home/databox/.opam \
 && sudo apk del .build-deps \
 && sudo apk add libsodium gmp zlib
