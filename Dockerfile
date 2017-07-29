@@ -1,31 +1,39 @@
-FROM ocaml/opam:alpine
+FROM alpine:latest
 
 MAINTAINER jmoore@zedstar.org
 
-# set opam repo
-RUN opam remote remove default && opam remote add default https://opam.ocaml.org && opam update && opam upgrade
+RUN apk update && apk upgrade \
+ && apk add sudo \
+ && adduser -S databox \
+ && echo 'databox ALL=(ALL:ALL) NOPASSWD:ALL' > /etc/sudoers.d/databox \
+ && chmod 440 /etc/sudoers.d/databox \
+ && chown root:root /etc/sudoers.d/databox \
+ && sed -i.bak 's/^Defaults.*requiretty//g' /etc/sudoers
 
-# fix starting SSL within code
-RUN opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option
-# need to find out what this fix actually is for!
-RUN opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256
-# fix for kv store
-RUN opam pin add ezirmin -n -k http https://github.com/kayceesrk/ezirmin/releases/download/0.2.1/ezirmin-0.2.1.tbz
-
-# install dependencies
-RUN sudo apk add libsodium-dev && \
-opam depext -i core lwt tls sodium macaroons opium cohttp ezirmin bos
+USER databox
+WORKDIR /home/databox
 
 # add the code
 ADD src src
-RUN sudo chown -R opam:nogroup src
-# compile the code
+RUN sudo chown -R databox:nogroup src
+# add the build script
 ADD build.sh .
-RUN ./build.sh
+
+# setup ocaml
+RUN sudo apk add --no-cache --virtual .build-deps alpine-sdk bash ncurses-dev m4 perl gmp-dev zlib-dev libsodium-dev opam \
+&& opam init \ 
+&& opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option \
+&& opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256 \
+&& opam install -y core lwt tls sodium macaroons opium cohttp ezirmin bos \
+&& sudo chmod +x build.sh && sync \
+&& ./build.sh \
+#&& sudo apk del alpine-sdk bash ncurses-dev m4 perl libffi-dev libsodium-dev opam \
+&& rm -rf /home/databox/.opam \
+&& sudo apk del .build-deps \
+&& sudo apk add libsodium gmp zlib
 
 EXPOSE 8080
 
 LABEL databox.type="store"
 
 ENTRYPOINT ["./main.exe"]
-
