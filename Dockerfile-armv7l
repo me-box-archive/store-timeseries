@@ -1,0 +1,8 @@
+FROM armhf/alpine:latest
+
+EXPOSE 8080
+
+LABEL databox.type="store"
+
+CMD ["sleep","2147483647"]
+
