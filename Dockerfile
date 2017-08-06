@@ -24,7 +24,7 @@ RUN sudo apk add --no-cache --virtual .build-deps alpine-sdk bash ncurses-dev m4
 && opam init \ 
 && opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option \
 && opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256 \
-&& opam install -y core lwt tls sodium macaroons opium cohttp ezirmin bos \
+&& opam install -y reason lwt tls sodium macaroons opium cohttp ezirmin bos uuidm \
 && sudo chmod +x build.sh && sync \
 && ./build.sh \
 && rm -rf /home/databox/.opam \
