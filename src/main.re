@@ -16,7 +16,8 @@ let http_cert = Bootstrap.get_http_cert ();
 let http_key = Bootstrap.get_http_key (); 
 
 /* utility funcs */
-let get_time () => int_of_float (Unix.time ());
+let get_time () => 
+  int_of_float (Unix.time ());
 
 let list_last l => 
   List.nth l (List.length l - 1);
@@ -38,179 +39,128 @@ let prefix_target s => "target = " ^ s;
 
 let status = get "/status" (fun _ => respond' (`String "active"));
 
-let get_image =
-  get
-    "/:key/image"
-    (
+let get_image = get "/:key/image" {
       fun req => {
         let key = param req "key";
         let headers = Cohttp.Header.init_with "content-type" "image/jpeg";
-        Database.read_image image_store key >>= (
+        Database.read_image image_store key >>=
           fun resp => respond' ::headers (`Html resp)
-        )
       }
-    );
+};
 
-let post_ts_image =
-  post
-    "/:id/image"
-    (
+let post_ts_image = post "/:id/image" {
       fun req => {
         let uuid = Uuidm.v4_gen (Random.State.make_self_init ()) () |> Uuidm.to_string;
         let json_uuid = Ezjsonm.dict [("uuid", `String uuid)];
         let id = param req "id";
-        req |> App.string_of_body_exn >>= (
+        req |> App.string_of_body_exn >>=
           fun body =>
-            Database.write_image image_store uuid body >>= (
+            Database.write_image image_store uuid body >>=
               fun _ =>
-                Database.write_ts ts_store id json_uuid >>= (
+                Database.write_ts ts_store id json_uuid >>=
                   fun resp => respond' (`Json resp)
-                )
-            )
-        )
       }
-    );
+};
 
-let get_kv =
-  get
-    "/:key/kv"
-    (
+let get_kv = get "/:key/kv" {
       fun req => {
         let key = param req "key";
         Database.read_kv kv_store key >>= (fun resp => respond' (`Json resp))
       }
-    );
+};
 
-let post_kv =
-  post
-    "/:key/kv"
-    (
+let post_kv = post "/:key/kv" {
       fun req => {
         let key = param req "key";
-        req |> App.json_of_body_exn >>= (
+        req |> App.json_of_body_exn >>=
           fun body =>
             Database.write_kv kv_store key body >>= (fun resp => respond' (`Json resp))
-        )
       }
-    );
+};
 
-let post_ts =
-  post
-    "/:id/ts"
-    (
+let post_ts = post "/:id/ts" {
       fun req => {
         let id = param req "id";
-        req |> App.json_of_body_exn >>= (
+        req |> App.json_of_body_exn >>=
           fun body =>
             Database.write_ts ts_store id body >>= (fun resp => respond' (`Json resp))
-        )
       }
-    );
+};
 
-let get_ts_latest =
-  get
-    "/:id/ts/latest"
-    (
+let get_ts_latest = get "/:id/ts/latest" {
       fun req => {
         let id = param req "id";
         Database.read_ts_latest ts_store id >>= (fun resp => respond' (`Json resp))
       }
-    );
+};
 
-let get_ts_last =
-  get
-    "/:id/ts/last/:n"
-    (
+let get_ts_last = get "/:id/ts/last/:n" {
       fun req => {
         let id = param req "id";
         let n = param req "n";
-        Database.read_ts_last ts_store id (int_of_string n) >>= (
+        Database.read_ts_last ts_store id (int_of_string n) >>=
           fun resp => respond' (`Json resp)
-        )
       }
-    );
+};
 
-let get_ts_since =
-  get
-    "/:id/ts/since/:from"
-    (
+let get_ts_since = get "/:id/ts/since/:from" {
       fun req => {
         let id = param req "id";
         let from = param req "from";
-        Database.read_ts_since ts_store id (int_of_string from) >>= (
+        Database.read_ts_since ts_store id (int_of_string from) >>=
           fun resp => respond' (`Json resp)
-        )
       }
-    );
+};
 
-let get_ts_last_since =
-  get
-    "/:id/ts/last/:n/since/:from"
-    (
+let get_ts_last_since = get "/:id/ts/last/:n/since/:from" {
       fun req => {
         let id = param req "id";
         let n = param req "n";
         let from = param req "from";
-        Database.read_ts_last_since ts_store id (int_of_string n) (int_of_string from) >>= (
+        Database.read_ts_last_since ts_store id (int_of_string n) (int_of_string from) >>=
           fun resp => respond' (`Json resp)
-        )
       }
-    );
+};
 
-let get_ts_range =
-  get
-    "/:id/ts/range/:from/:to"
-    (
+let get_ts_range = get "/:id/ts/range/:from/:to" {
       fun req => {
         let id = param req "id";
         let t1 = param req "from";
         let t2 = param req "to";
-        Database.read_ts_range ts_store id (int_of_string t1) (int_of_string t2) >>= (
+        Database.read_ts_range ts_store id (int_of_string t1) (int_of_string t2) >>=
           fun resp => respond' (`Json resp)
-        )
       }
-    );
+};
 
-let get_ts_last_range =
-  get
-    "/:id/ts/last/:n/range/:from/:to"
-    (
+let get_ts_last_range = get "/:id/ts/last/:n/range/:from/:to" {
       fun req => {
         let id = param req "id";
         let n = param req "n";
         let t1 = param req "from";
         let t2 = param req "to";
         Database.read_ts_last_range
-          ts_store id (int_of_string n) (int_of_string t1) (int_of_string t2) >>= (
+          ts_store id (int_of_string n) (int_of_string t1) (int_of_string t2) >>=
           fun resp => respond' (`Json resp)
-        )
       }
-    );
+};
 
-let get_hypercat =
-  get
-    "/cat"
-    (
+let get_hypercat = get "/cat" {
       fun _ => {
         let _ = Lwt_log.info_f "%d:Requesting cat\n" (get_time ());
         let resp = Hypercat.get_cat ();
         respond' (`Json resp)
       }
-    );
+};
 
-let update_hypercat =
-  post
-    "/cat"
-    (
+let update_hypercat = post "/cat" {
       fun req =>
-        req |> App.json_of_body_exn >>= (
+        req |> App.json_of_body_exn >>=
           fun body => {
             let _ = Lwt_log.info_f "%d:Updating cat\n" (get_time ());
             let resp = Hypercat.update_cat (Ezjsonm.value body);
             respond' (`Json resp)
           }
-        )
-    );
+};
 
 let validate_token ::f => {
   let filter handler req => {
@@ -235,11 +185,14 @@ let validate_token ::f => {
   Rock.Middleware.create ::filter name::"validate_token"
 };
 
-let with_ssl () => App.ssl cert::http_cert key::http_key;
+let with_ssl () => 
+  App.ssl cert::http_cert key::http_key;
 
-let with_macaroon () => middleware (validate_token f::Auth_token.is_valid_token);
+let with_macaroon () => 
+  middleware (validate_token f::Auth_token.is_valid_token);
 
-let with_port_8080 () => App.port 8080;
+let with_port_8080 () => 
+  App.port 8080;
 
 let run () =>
   App.empty 
