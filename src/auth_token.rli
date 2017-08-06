@@ -1,0 +1,12 @@
+let mint_token:
+  id::string? =>
+  location::string? =>
+  path::string? =>
+  target::string? =>
+  meth::string? =>
+  key::string =>
+  string;
+
+let is_valid_token: string => string => bool;
+
+let set_network_credentials: list string => unit;

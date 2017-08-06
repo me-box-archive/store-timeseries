@@ -1,0 +1,9 @@
+let init: unit => Lwt.t unit;
+
+let get_macaroon_secret: unit => string;
+
+let get_http_key: unit => string;
+
+let get_http_cert: unit => string;
+
+let get_local_name: unit => string;

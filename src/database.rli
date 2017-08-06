@@ -1,0 +1,38 @@
+module Store_kv: {type branch = Ezirmin.FS_lww_register(Irmin.Contents.Json).branch;};
+
+module Store_ts: {
+  type branch = Ezirmin.FS_log(Tc.Pair(Tc.Int)(Irmin.Contents.Json)).branch;
+};
+
+module Store_image: {
+  type branch = Ezirmin.FS_lww_register(Irmin.Contents.String).branch;
+};
+
+let create_kv_store: file::string => Lwt.t Store_kv.branch;
+
+let create_ts_store: file::string => Lwt.t Store_ts.branch;
+
+let create_image_store: file::string => Lwt.t Store_image.branch;
+
+let read_image: Lwt.t Store_image.branch => string => Lwt.t string;
+
+let write_image: Lwt.t Store_image.branch => string => string => Lwt.t string;
+
+let read_kv: Lwt.t Store_kv.branch => string => Lwt.t Ezjsonm.t;
+
+let write_kv: Lwt.t Store_kv.branch => string => Ezjsonm.t => Lwt.t Ezjsonm.t;
+
+let write_ts: Lwt.t Store_ts.branch => string => Ezjsonm.t => Lwt.t Ezjsonm.t;
+
+let read_ts_latest: Lwt.t Store_ts.branch => string => Lwt.t Ezjsonm.t;
+
+let read_ts_since: Lwt.t Store_ts.branch => string => int => Lwt.t Ezjsonm.t;
+
+let read_ts_range: Lwt.t Store_ts.branch => string => int => int => Lwt.t Ezjsonm.t;
+
+let read_ts_last: Lwt.t Store_ts.branch => string => int => Lwt.t Ezjsonm.t;
+
+let read_ts_last_since: Lwt.t Store_ts.branch => string => int => int => Lwt.t Ezjsonm.t;
+
+let read_ts_last_range:
+  Lwt.t Store_ts.branch => string => int => int => int => Lwt.t Ezjsonm.t;
