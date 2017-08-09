@@ -31,6 +31,9 @@ RUN sudo apk add --no-cache --virtual .build-deps alpine-sdk bash ncurses-dev m4
 && sudo apk del .build-deps \
 && sudo apk add libsodium gmp zlib
 
+USER root
+VOLUME /database
+
 EXPOSE 8080
 
 LABEL databox.type="store"

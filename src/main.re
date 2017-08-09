@@ -3,12 +3,12 @@ open Opium.Std;
 open Lwt.Infix; 
 
 /* create the stores */
-let kv_store = Database.create_kv_store file::"/tmp/storekv";
+let kv_store = Database.create_kv_store file::"/database/storekv";
 
-let ts_store = Database.create_ts_store file::"/tmp/storets";
+let ts_store = Database.create_ts_store file::"/database/storets";
 
 let image_store =
-  Database.create_image_store file::"/tmp/storeimage"; 
+  Database.create_image_store file::"/database/storeimage"; 
   
 /* http credentials */
 let http_cert = Bootstrap.get_http_cert ();
