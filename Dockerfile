@@ -17,7 +17,7 @@ RUN sudo apk add alpine-sdk bash ncurses-dev m4 perl gmp-dev zlib-dev libsodium-
 && rm -rf /home/opam/.opam \
 && rm -rf /home/opam/opam-repository
 
-FROM alpine:latest
+FROM alpine:3.4
 
 USER root
 WORKDIR /home/databox
