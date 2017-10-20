@@ -7,7 +7,7 @@ RUN sudo chown -R opam:nogroup src
 ADD build.sh .
 
 # setup ocaml
-RUN sudo apk add alpine-sdk bash ncurses-dev m4 perl gmp-dev zlib-dev libsodium-dev opam \
+RUN sudo apk update && sudo apk add alpine-sdk bash ncurses-dev m4 perl gmp-dev zlib-dev libsodium-dev opam \
 && opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option \
 && opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256 \
 && opam install -y reason lwt tls sodium macaroons opium cohttp ezirmin bos uuidm \
