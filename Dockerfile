@@ -10,7 +10,7 @@ ADD build.sh .
 RUN sudo apk update && sudo apk add alpine-sdk bash ncurses-dev m4 perl gmp-dev zlib-dev libsodium-dev opam \
 && opam pin add -n opium https://github.com/me-box/opium.git#fix-ssl-option \
 && opam pin add -n sodium https://github.com/me-box/ocaml-sodium.git#with_auth_hmac256 \
-&& opam install -y reason lwt tls sodium macaroons opium cohttp ezirmin bos uuidm \
+&& opam install -y reason.1.13.7 lwt tls sodium macaroons opium cohttp ezirmin bos uuidm \
 && sudo chmod +x build.sh && sync \
 && ./build.sh \
 && rm -rf /home/opam/src \
